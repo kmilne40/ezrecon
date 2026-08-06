@@ -20,10 +20,10 @@ the book; EZRecon is the passive workhorse that feeds it.
 
 ```
  ______ ___________
- |  ___/___  /  __ \   EZRecon 2.0
+ |  ___/___  /  __ \   EZRecon
  | |__    / /| /  \/   passive recon for the mainframe hunter
  |  __|  / / | |
- | |___./ /__| \__/\   v2.0.0
+ | |___./ /__| \__/\   v2.1.0
  \____/\_____/\____/
 ```
 
@@ -54,6 +54,9 @@ the book; EZRecon is the passive workhorse that feeds it.
 
 - **Async engine.** DNS, subdomain brute force, banner grabs and the email
   spider all run concurrently. A sweep that used to take minutes takes seconds.
+- **Parallel auto-recon.** The one-shot sweep runs its independent stages at the
+  same time and only serialises what genuinely depends on earlier results, so
+  wall time is roughly halved.
 - **Two front-ends, one engine.** A phosphor-themed Textual TUI for interactive
   work and a subcommand CLI for scripting and CI — both drive the exact same
   recon engine and the same `Session` model, so results are identical.
@@ -62,9 +65,13 @@ the book; EZRecon is the passive workhorse that feeds it.
   catalogue, and a fingerprint scorer that flags *likely mainframe* and names
   the service.
 - **Certificate-transparency enrichment.** Pulls subdomains straight out of
-  crt.sh to catch the shadow endpoints a wordlist never will.
-- **One-shot auto-recon.** Point it at a domain and it runs the whole passive
-  chain into a single dossier.
+  crt.sh, resolves them, and merges them with the brute-force results so a
+  passive hit becomes a confirmed live host.
+- **ASN / netblock enrichment.** Groups every resolved IP by ASN, owner and BGP
+  prefix via Team Cymru — pure DNS, no key, no external tool — which often
+  exposes the organisation's own address space.
+- **Editable Shodan query builder.** Tick the mainframe queries you want, edit
+  their syntax, or type your own — all from the TUI.
 - **AI-OSINT prompt generator.** Emits the deep-research prompt from Chapter 6,
   pre-filled with the target and everything EZRecon already found.
 - **Report export.** Markdown, HTML (phosphor-themed), JSON, and a `queries.txt`
@@ -87,6 +94,16 @@ python3 -m pip install -r requirements.txt
 
 # option B: install the `ezrecon` command onto your PATH
 python3 -m pip install .
+```
+
+If you grabbed the release archive instead of cloning, it extracts **flat** —
+the package files land directly in the current directory, with no wrapper
+folder — so extract it into a directory of your choosing and work from there:
+
+```bash
+mkdir ezrecon && cd ezrecon
+unzip /path/to/EZRecon.zip
+python3 -m pip install -r requirements.txt   # or: python3 -m pip install .
 ```
 
 On Debian/Ubuntu you may need `--break-system-packages` (or use a virtualenv):
@@ -163,6 +180,7 @@ ezrecon dns example.com                          # records + SPF/DMARC + AXFR
 ezrecon whois example.com
 ezrecon subdomains example.com --wordlist my.txt # concurrent brute force
 ezrecon crtsh example.com                        # certificate transparency
+ezrecon asn example.com                          # ASN / netblock enrichment
 ezrecon email https://example.com --depth 2      # email spider
 ezrecon ports example.com                        # native, non-nmap banner grab
 ezrecon ports example.com --ports 21,23,50000    # custom port set
@@ -182,7 +200,8 @@ ezrecon config show
 | `dns <domain>` | A/AAAA/MX/NS/SOA/TXT/CNAME + SPF/DMARC, reverse, zone transfer | `--report` |
 | `whois <domain>` | Registrar, dates, name servers, contacts | `--report` |
 | `subdomains <domain>` | Concurrent brute force with wildcard detection | `--wordlist`, `--report` |
-| `crtsh <domain>` | Passive subdomains from certificate transparency | `--report` |
+| `crtsh <domain>` | Passive subdomains from certificate transparency (resolved + merged) | `--report` |
+| `asn <target>` | ASN / netblock enrichment for a domain or IP (Team Cymru, pure DNS) | `--report` |
 | `email <url>` | Bounded async email spider | `--depth`, `--report` |
 | `ports <target>` | Native (non-nmap) connect + banner + fingerprint | `--ports`, `--report` |
 | `shodan [query]` | Shodan search or the z/OS query library | `--mainframe`, `--report` |
@@ -232,6 +251,8 @@ Writes always go to the XDG config file. Tunable settings live there too:
 | Setting | Default | Meaning |
 |--------|---------|---------|
 | `dns_concurrency` | `100` | Concurrent resolvers for the subdomain brute force |
+| `brute_timeout` | `2.0` | Per-query DNS timeout for the subdomain brute force (seconds) |
+| `dns_nameservers` | *(public)* | Resolvers to use; `null` = fast public resolvers, `[]` = the system resolver, or a custom list |
 | `port_concurrency` | `200` | Concurrent TCP connects for the banner grab |
 | `spider_concurrency` | `20` | Concurrent fetches for the email spider |
 | `timeout` | `5.0` | Default network timeout (seconds) |
@@ -248,10 +269,11 @@ Writes always go to the XDG config file. Tunable settings live there too:
 | **DNS** | All common record types, SPF and DMARC parsing, reverse lookups, and a zone-transfer (AXFR) attempt against every name server |
 | **WHOIS** | Registrar, creation/expiry/updated dates, name servers, contacts (via `python-whois`, with a system-`whois` fallback) |
 | **Subdomains** | Concurrent brute force with wildcard-DNS detection so a wildcard zone doesn't report the whole wordlist as live |
-| **crt.sh** | Passive subdomain discovery from certificate-transparency logs |
+| **crt.sh** | Passive subdomain discovery from certificate-transparency logs, resolved and merged with the brute-force results |
+| **ASN** | Groups every resolved IP by ASN, owner and BGP prefix via Team Cymru (pure DNS, no key) |
 | **Email Spider** | Bounded, depth-limited async crawl that harvests email addresses from `mailto:` links and page text |
 | **Banner Grab** | Native, non-Nmap async connect + banner read across the mainframe port profile, with fingerprint scoring |
-| **Shodan** | Ships a z/OS banner-query library (TSO `IKJ56700A`, IBM FTP, CICS, Db2/DRDA, NJE) so you can sweep without memorising syntax |
+| **Shodan** | A z/OS banner-query library you can drive from the TUI as a tick-box panel — toggle queries, edit their syntax, or add your own |
 | **Google Dork** | The mainframe dork catalogue (Listing 6-1) as a multi-select: tick the queries you want and fire them at the target |
 | **AI Prompt** | Generates the Chapter 6 deep-research OSINT prompt, pre-filled with the target and any findings gathered so far |
 
@@ -330,8 +352,11 @@ The port profile scanned by default: `21, 23, 992, 175, 443, 448, 2809, 3270,
 
 ## Project layout
 
+The release archive extracts flat — these files sit at the root, with no
+wrapper directory:
+
 ```
-EZRecon/
+.
 ├── EZrecon.py                 # book-compatible launcher (python3 EZrecon.py)
 ├── pyproject.toml             # packaging + `ezrecon` entry point
 ├── requirements.txt
@@ -351,17 +376,18 @@ EZRecon/
     │   ├── banner_signatures.json   # port profile + banner regexes
     │   └── subdomains.txt           # mainframe-relevant wordlist
     ├── engine/
-    │   ├── base.py            # validators + network primitives
+    │   ├── base.py            # validators + tuned resolver + pooled HTTP
     │   ├── dns_recon.py
     │   ├── whois_recon.py
     │   ├── subdomains.py
-    │   ├── crtsh.py
+    │   ├── crtsh.py           # CT logs, resolved + merged
+    │   ├── asn.py             # ASN / netblock enrichment (Team Cymru DNS)
     │   ├── email_scraper.py
     │   ├── ports.py           # native (non-nmap) banner grab
     │   ├── shodan_recon.py
     │   ├── google_dork.py
     │   ├── ai_osint.py
-    │   └── pipeline.py        # auto-recon orchestrator
+    │   └── pipeline.py        # parallel auto-recon orchestrator
     ├── report/
     │   └── reporter.py        # md / html / json / queries.txt
     └── tui/
