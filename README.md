@@ -23,7 +23,7 @@ the book; EZRecon is the passive workhorse that feeds it.
  |  ___/___  /  __ \   EZRecon
  | |__    / /| /  \/   passive recon for the mainframe hunter
  |  __|  / / | |
- | |___./ /__| \__/\   v2.1.0
+ | |___./ /__| \__/\   v2.2.0
  \____/\_____/\____/
 ```
 
@@ -70,8 +70,18 @@ the book; EZRecon is the passive workhorse that feeds it.
 - **ASN / netblock enrichment.** Groups every resolved IP by ASN, owner and BGP
   prefix via Team Cymru — pure DNS, no key, no external tool — which often
   exposes the organisation's own address space.
+- **Google dorks, with or without a key.** Tick the mainframe dork catalogue
+  (Listing 6-1) and either fetch results via the Custom Search API, or use the
+  no-key **link mode** to get clickable browser URLs — no key, no quota, no ToS
+  issue.
 - **Editable Shodan query builder.** Tick the mainframe queries you want, edit
   their syntax, or type your own — all from the TUI.
+- **Preview pane (no browser needed).** Press `p` on a dork result to resolve it
+  to real links (DuckDuckGo, or the Google API when keyed), fetch a page, and see
+  where each dork term appears in context — with an optional LLM summary and a
+  one-key "open in browser". Clearly gated as active recon.
+- **Editable dorks & Shodan queries.** Every query in both panels is a tick-box
+  plus an editable field, so you can tweak the syntax or add your own.
 - **AI-OSINT prompt generator.** Emits the deep-research prompt from Chapter 6,
   pre-filled with the target and everything EZRecon already found.
 - **Report export.** Markdown, HTML (phosphor-themed), JSON, and a `queries.txt`
@@ -163,6 +173,7 @@ progress and timings.
 | `a` | Run Auto-Recon |
 | `e` | Export a report (md / html / json / queries.txt) |
 | `k` | Open the API-key vault |
+| `p` | Preview the selected dork result (fetch + analyse) |
 | `c` | Clear the results table |
 | `q` | Quit |
 
@@ -187,7 +198,11 @@ ezrecon ports example.com --ports 21,23,50000    # custom port set
 ezrecon shodan "IKJ56700A port:23"               # raw Shodan query
 ezrecon shodan --mainframe example.com           # z/OS query library
 ezrecon dork example.com --all                   # Google dorks (needs a key)
+ezrecon dork example.com --all --links           # no key: clickable search URLs
+ezrecon dork example.com --links --engine duckduckgo
 ezrecon prompt example.com                        # AI deep-research OSINT prompt
+ezrecon preview "site:example.com filetype:JCL"   # resolve a dork to real results
+ezrecon preview "site:example.com" --pages --summary   # fetch pages, terms in context (active)
 ezrecon auto example.com --ports --shodan        # full one-shot sweep
 ezrecon config set shodan_api_key YOUR_KEY
 ezrecon config show
@@ -205,8 +220,9 @@ ezrecon config show
 | `email <url>` | Bounded async email spider | `--depth`, `--report` |
 | `ports <target>` | Native (non-nmap) connect + banner + fingerprint | `--ports`, `--report` |
 | `shodan [query]` | Shodan search or the z/OS query library | `--mainframe`, `--report` |
-| `dork <domain>` | Mainframe Google-dork catalogue | `--all`, `--report` |
+| `dork <domain>` | Mainframe Google-dork catalogue (API fetch or `--links`) | `--all`, `--links`, `--engine`, `--report` |
 | `prompt <domain>` | Print an AI deep-research OSINT prompt | — |
+| `preview <query>` | Resolve a dork to real results; `--pages` fetches + shows terms in context (active) | `--engine`, `--limit`, `--pages`, `--summary` |
 | `auto <domain>` | One-shot passive sweep into a single session | `--ports`, `--shodan`, `--report` |
 | `config set <name> <value>` | Store an API key or setting | — |
 | `config show` | Print current keys (masked) and settings | — |
@@ -232,12 +248,14 @@ Sample output:
 
 ## API keys and configuration
 
-Google Custom Search (for dorks) and Shodan need API keys. Store them once:
+Google Custom Search (for dorks) and Shodan need API keys. An Anthropic key is
+optional and only used for the preview pane's LLM summaries. Store them once:
 
 ```bash
 ezrecon config set google_api_key  YOUR_KEY
 ezrecon config set google_cse_id   YOUR_CX
 ezrecon config set shodan_api_key  YOUR_KEY
+ezrecon config set anthropic_api_key YOUR_KEY   # optional — preview summaries
 ```
 
 Keys are read with this precedence (first hit wins):
@@ -258,6 +276,8 @@ Writes always go to the XDG config file. Tunable settings live there too:
 | `timeout` | `5.0` | Default network timeout (seconds) |
 | `theme` | `phosphor` | TUI theme |
 | `output_dir` | *(cwd)* | Where reports are written by default |
+| `anthropic_model` | `claude-haiku-4-5-20251001` | Model used for preview LLM summaries |
+| `allow_active_fetch` | `false` | Skip the active-recon confirmation for the preview pane |
 
 ---
 
@@ -274,8 +294,9 @@ Writes always go to the XDG config file. Tunable settings live there too:
 | **Email Spider** | Bounded, depth-limited async crawl that harvests email addresses from `mailto:` links and page text |
 | **Banner Grab** | Native, non-Nmap async connect + banner read across the mainframe port profile, with fingerprint scoring |
 | **Shodan** | A z/OS banner-query library you can drive from the TUI as a tick-box panel — toggle queries, edit their syntax, or add your own |
-| **Google Dork** | The mainframe dork catalogue (Listing 6-1) as a multi-select: tick the queries you want and fire them at the target |
+| **Google Dork** | The mainframe dork catalogue (Listing 6-1) as a multi-select. Fetch results via the Custom Search API, or use no-key **link mode** for clickable browser URLs (Google/Bing/DuckDuckGo/Startpage) |
 | **AI Prompt** | Generates the Chapter 6 deep-research OSINT prompt, pre-filled with the target and any findings gathered so far |
+| **Preview** | Resolves a dork to real results, fetches a page, and highlights where terms appear in context — optional LLM summary, open-in-browser. Active recon, gated behind a confirmation |
 
 ---
 
@@ -387,6 +408,7 @@ wrapper directory:
     │   ├── shodan_recon.py
     │   ├── google_dork.py
     │   ├── ai_osint.py
+    │   ├── webintel.py        # preview: results, page fetch, context, LLM summary
     │   └── pipeline.py        # parallel auto-recon orchestrator
     ├── report/
     │   └── reporter.py        # md / html / json / queries.txt
