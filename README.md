@@ -23,7 +23,7 @@ the book; EZRecon is the passive workhorse that feeds it.
  |  ___/___  /  __ \   EZRecon
  | |__    / /| /  \/   passive recon for the mainframe hunter
  |  __|  / / | |
- | |___./ /__| \__/\   v2.2.0
+ | |___./ /__| \__/\   v2.4.0
  \____/\_____/\____/
 ```
 
@@ -80,6 +80,15 @@ the book; EZRecon is the passive workhorse that feeds it.
   to real links (DuckDuckGo, or the Google API when keyed), fetch a page, and see
   where each dork term appears in context — with an optional LLM summary and a
   one-key "open in browser". Clearly gated as active recon.
+- **Entity graph with live pivots.** Press `g` for a Maltego-style graph of the
+  session — domains, subdomains, IPs, ASNs, emails, ports, dorks and their
+  relationships. Select a node and pivot (resolve, scan, spider, Shodan, dork)
+  with results folding back into the graph. Exports to a self-contained
+  interactive HTML file.
+- **Options popup + discovery chaining.** An in-TUI Options screen (`o`) exposes
+  the CLI settings — wordlist, crawl depth, ports, preview engine — and when new
+  subdomains are found EZRecon offers to chain the top ones into `site:` dork
+  links and email-spider seeds (confirmation first, capped, no API quota).
 - **Editable dorks & Shodan queries.** Every query in both panels is a tick-box
   plus an editable field, so you can tweak the syntax or add your own.
 - **AI-OSINT prompt generator.** Emits the deep-research prompt from Chapter 6,
@@ -174,6 +183,8 @@ progress and timings.
 | `e` | Export a report (md / html / json / queries.txt) |
 | `k` | Open the API-key vault |
 | `p` | Preview the selected dork result (fetch + analyse) |
+| `g` | Open the entity graph (navigate + pivot) |
+| `o` | Open the Options popup (wordlist, depth, ports, chaining) |
 | `c` | Clear the results table |
 | `q` | Quit |
 
@@ -204,6 +215,7 @@ ezrecon prompt example.com                        # AI deep-research OSINT promp
 ezrecon preview "site:example.com filetype:JCL"   # resolve a dork to real results
 ezrecon preview "site:example.com" --pages --summary   # fetch pages, terms in context (active)
 ezrecon auto example.com --ports --shodan        # full one-shot sweep
+ezrecon auto example.com --chain                 # sweep, then chain new subdomains
 ezrecon config set shodan_api_key YOUR_KEY
 ezrecon config show
 ```
@@ -223,6 +235,7 @@ ezrecon config show
 | `dork <domain>` | Mainframe Google-dork catalogue (API fetch or `--links`) | `--all`, `--links`, `--engine`, `--report` |
 | `prompt <domain>` | Print an AI deep-research OSINT prompt | — |
 | `preview <query>` | Resolve a dork to real results; `--pages` fetches + shows terms in context (active) | `--engine`, `--limit`, `--pages`, `--summary` |
+| `graph <session.json>` | Build an interactive HTML entity graph from a saved session | `--out` |
 | `auto <domain>` | One-shot passive sweep into a single session | `--ports`, `--shodan`, `--report` |
 | `config set <name> <value>` | Store an API key or setting | — |
 | `config show` | Print current keys (masked) and settings | — |
@@ -311,6 +324,7 @@ Any recon command with `--report DIR`, the TUI's **export** action (`e`), or
 | `ezrecon_<target>.html` | The same report, phosphor-themed, ready to hand over |
 | `ezrecon_<target>.json` | The full structured `Session` for tooling / re-import |
 | `ezrecon_<target>_queries.txt` | Every query EZRecon ran — the lab deliverable |
+| `ezrecon_<target>_graph.html` | Interactive entity graph (open in a browser) |
 
 Example `queries.txt`:
 
@@ -409,9 +423,12 @@ wrapper directory:
     │   ├── google_dork.py
     │   ├── ai_osint.py
     │   ├── webintel.py        # preview: results, page fetch, context, LLM summary
+    │   ├── graph.py           # entity-graph model (nodes + edges from a session)
+    │   ├── pivots.py          # per-node recon pivots (the Maltego loop)
     │   └── pipeline.py        # parallel auto-recon orchestrator
     ├── report/
-    │   └── reporter.py        # md / html / json / queries.txt
+    │   ├── reporter.py        # md / html / json / queries.txt (+ graph html)
+    │   └── graph_html.py      # interactive Cytoscape graph export
     └── tui/
         ├── app.py             # Textual application
         └── app.tcss           # phosphor CRT stylesheet
