@@ -23,7 +23,7 @@ the book; EZRecon is the passive workhorse that feeds it.
  |  ___/___  /  __ \   EZRecon
  | |__    / /| /  \/   passive recon for the mainframe hunter
  |  __|  / / | |
- | |___./ /__| \__/\   v2.5.1
+ | |___./ /__| \__/\   v2.5.2
  \____/\_____/\____/
 ```
 
@@ -308,7 +308,7 @@ Writes always go to the XDG config file. Tunable settings live there too:
 | **Email Spider** | Bounded, depth-limited async crawl that harvests email addresses from `mailto:` links and page text |
 | **Banner Grab** | Native, non-Nmap async connect + banner read across the mainframe port profile, with fingerprint scoring |
 | **Shodan** | A z/OS banner-query library you can drive from the TUI as a tick-box panel — toggle queries, edit their syntax, or add your own |
-| **Google Dork** | The mainframe dork catalogue (Listing 6-1), editable per row. **Fetch results (no key)** returns real Title/Link/Snippet hits via DuckDuckGo; **link mode** gives clickable URLs; or fetch via the Custom Search API if you have a key |
+| **Google Dork** | The mainframe dork catalogue (Listing 6-1), editable per row. **Fetch results (no key)** returns real Title/Link/Snippet hits via DuckDuckGo (DuckDuckGo can block scraping with an HTTP 202 anti-bot response from some networks — if so, use **Via API** with a Google key for reliable results); **link mode** gives clickable URLs; or fetch via the Custom Search API if you have a key |
 | **AI Prompt** | Generates the Chapter 6 deep-research OSINT prompt, pre-filled with the target and any findings gathered so far |
 | **Preview** | Resolves a dork to real results, fetches a page, and highlights where terms appear in context — optional LLM summary, open-in-browser. Active recon, gated behind a confirmation |
 
