@@ -19,12 +19,10 @@ the book; EZRecon is the passive workhorse that feeds it.
 ![Licence](https://img.shields.io/badge/licence-Community%20%26%20Educational%20v1.0-ffb000?style=flat-square)
 
 ```
- ______ ___________
- |  ___/___  /  __ \   EZRecon
- | |__    / /| /  \/   passive recon for the mainframe hunter
- |  __|  / / | |
- | |___./ /__| \__/\   v2.7.2
- \____/\_____/\____/
+     ____                     eZrecon
+ ___|_  /_ _ ___ __ ___ _ _   passive recon for the
+/ -_)/ /| '_/ -_) _/ _ \ ' \  mainframe hunter
+\___/___|_| \___\__\___/_||_| v2.16.0
 ```
 
 ---
@@ -54,9 +52,16 @@ the book; EZRecon is the passive workhorse that feeds it.
 
 - **Async engine.** DNS, subdomain brute force, banner grabs and the email
   spider all run concurrently. A sweep that used to take minutes takes seconds.
-- **Parallel auto-recon.** The one-shot sweep runs its independent stages at the
-  same time and only serialises what genuinely depends on earlier results, so
-  wall time is roughly halved.
+- **Parallel auto-recon with a passive OSINT chain.** The one-shot sweep runs its
+  independent stages at the same time and only serialises what genuinely depends
+  on earlier results, so wall time is roughly halved. After the core map it chains,
+  in data-flow order, a DNS-only takeover check, the Wayback harvest, document
+  metadata over the archived documents, and the people harvest. It stays passive
+  and keyless throughout; active and keyed features are never fired automatically.
+  `--light` skips the chain for a quick core sweep.
+- **Four colour themes.** Phosphor green (default), Amber, Light (black on white)
+  and Mono (white on black), switchable live in Options and remembered between
+  runs. High and critical findings are drawn as a full red row so they stand out.
 - **Two front-ends, one engine.** A phosphor-themed Textual TUI for interactive
   work and a subcommand CLI for scripting and CI — both drive the exact same
   recon engine and the same `Session` model, so results are identical.
@@ -548,3 +553,136 @@ Homebrew. Add `--yes` for unattended setup. After setup, the keyless **Fetch res
 <domain> --fetch` use SearXNG automatically. Already have a SearXNG instance?
 Point at it with `ezrecon config set-setting searx_url http://host:8080` (make
 sure `json` is in its `search.formats`).
+
+
+### Dangling DNS / subdomain takeover
+
+For each discovered subdomain EZRecon follows the CNAME chain and flags takeover
+conditions using the can-i-take-over-xyz fingerprint set (a CNAME to a known
+service whose page returns the unclaimed fingerprint, a provider whose target is
+NXDOMAIN, or a dangling CNAME to a dead target). A record that merely resolves is
+not flagged.
+
+```
+ezrecon takeover <domain>            # passive (CNAME chain + NXDOMAIN)
+ezrecon takeover <domain> --http     # active: HTTP-confirm candidates
+ezrecon takeover --update            # refresh provider fingerprints
+```
+
+In the TUI use the "Dangling DNS" module, or the "Check takeover" pivot on a
+subdomain node. HTTP confirmation runs only with `--http` (CLI) or active recon
+enabled (TUI).
+
+### nmap / NSE builder
+
+Press `n` in the TUI for a builder that reads your installed nmap: tick scripts
+and only that script's `--script-args` appear, with a mainframe filter, book
+presets, search, live command preview, and a Refresh button
+(`--script-updatedb`). It composes and copies the command; run privileged scans
+in your own shell.
+
+```
+ezrecon nse list --mainframe                 # book scripts present on this box
+ezrecon nse args drda-brute                  # that script's documented args
+ezrecon nse build 10.0.0.1 --preset db2-drda # build from a book preset
+```
+
+
+### Wayback historical URLs & GitHub dorking
+
+```
+ezrecon wayback <domain>              # archived URLs (flags JCL/COBOL/.env/.git/backups)
+ezrecon github <domain> --org <org>   # GitHub code-search dork links (keyless)
+ezrecon github <domain> --org <org> --fetch   # run via API (needs github_token)
+```
+
+Both are keyless in link mode. Wayback pulls from the Internet Archive CDX API
+and flags interesting paths (with extra weight on mainframe artefacts). GitHub
+dorking scopes code-search to the target; add a token for direct API results.
+Both appear as TUI modules ("Wayback URLs", "GitHub Dorks") too.
+
+
+### Favicon-hash pivot
+
+```
+ezrecon favicon <host>            # hash the favicon, print the Shodan query
+ezrecon favicon <host> --shodan   # pivot to co-located hosts (needs Shodan key)
+```
+
+Also a "Favicon hash pivot" action on domain/subdomain/IP nodes in the graph.
+Finds origin servers behind a CDN, dev/staging clones, and phishing copies that
+reuse the same icon. No mmh3 dependency (vendored pure-Python MurmurHash3).
+
+
+### CTI RSS reader
+
+Press `s` in the TUI for a security-news reader (Krebs, BleepingComputer, Planet
+Mainframe, and 10 more). Items mentioning your current target or mainframe
+keywords are starred. Open items in the browser or email a selection.
+
+```
+ezrecon rss                         # list latest items per feed
+ezrecon rss --highlight mainframe,RACF
+ezrecon rss --email --to you@example.com   # needs SMTP config
+```
+
+SMTP is read from the config vault (no credentials in files):
+```
+ezrecon config set-setting smtp_host mail.example.com
+ezrecon config set-setting smtp_from you@example.com
+ezrecon config set-setting smtp_to dest@example.com
+ezrecon config set smtp_username you@example.com
+ezrecon config set smtp_password <password>
+```
+
+
+### Document metadata harvesting
+
+```
+ezrecon docmeta <domain>          # find docs via dorks+wayback, extract metadata
+ezrecon docmeta --url https://x/report.pdf   # a specific document
+```
+
+Extracts author/last-modified-by usernames, authoring software + version, and
+company fields from public PDFs and Office docs. Authors become people nodes in
+the graph. Also a "Doc Metadata" TUI module and an "Extract doc metadata" pivot
+on document nodes. No new dependencies (stdlib zip/xml; pypdf optional).
+
+
+### People / email harvesting
+
+```
+ezrecon harvest <domain>                 # consolidate + PGP + infer naming
+ezrecon harvest <domain> --deep          # run subdomains+crt.sh+spider first
+ezrecon harvest <domain> --names "John Smith, Jane Doe"
+```
+
+Aggregates every email/name EZRecon has found (spider, docmeta, crt.sh, dorks,
+Wayback), deduplicates with per-source tags, adds a keyless PGP keyserver lookup,
+infers the org's email format, and generates likely addresses for known names.
+Also a "People Harvest" TUI module.
+
+
+### HIBP breach checking
+
+```
+ezrecon breach <domain>              # check emails already found
+ezrecon breach --email john@x.com    # a specific address
+ezrecon breach <domain> --harvest    # gather emails first, then check
+```
+
+Checks discovered emails against Have I Been Pwned (needs `hibp_api_key`).
+Password-exposing breaches are flagged HIGH. Also a "Breach Check" TUI module;
+breached accounts show as red nodes in the graph.
+
+
+### Cloud bucket discovery
+
+```
+ezrecon buckets <domain>              # probe S3 + GCS
+ezrecon buckets <domain> --org "SighberBank" --azure
+```
+
+Generates bucket names from the target + environment suffixes and checks S3/GCS/
+Azure. Public (listable) buckets are flagged HIGH, private-but-existing MEDIUM.
+Also a "Cloud Buckets" TUI module (active recon only, since it probes providers).
