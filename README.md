@@ -23,7 +23,7 @@ the book; EZRecon is the passive workhorse that feeds it.
  |  ___/___  /  __ \   EZRecon
  | |__    / /| /  \/   passive recon for the mainframe hunter
  |  __|  / / | |
- | |___./ /__| \__/\   v2.5.2
+ | |___./ /__| \__/\   v2.6.0
  \____/\_____/\____/
 ```
 
@@ -263,7 +263,33 @@ Sample output:
 ## API keys and configuration
 
 Google Custom Search (for dorks) and Shodan need API keys. An Anthropic key is
-optional and only used for the preview pane's LLM summaries. Store them once:
+optional and only used for the preview pane's LLM summaries.
+
+**Setting up Google dorking (Via API) — the reliable, one-time setup**
+
+Keyless dorking via DuckDuckGo works from some networks but DuckDuckGo often
+blocks scraping (HTTP 202). For results that always work, use the Google
+Custom Search JSON API (free tier: 100 queries/day):
+
+1. Enable the Custom Search API:
+   https://console.cloud.google.com/apis/library/customsearch.googleapis.com
+2. Create an API key: APIs & Services > Credentials > Create credentials > API key.
+3. Create a Programmable Search Engine set to search the **entire web**:
+   https://programmablesearchengine.google.com/ — then copy its **Search engine
+   ID (cx)**.
+4. Save them and verify:
+
+```
+ezrecon config set google_api_key YOUR_KEY
+ezrecon config set google_cse_id  YOUR_CX
+ezrecon config test        # one test query — tells you exactly what's wrong, if anything
+```
+
+`ezrecon config test` (or the **Save & test Google** button in the TUI keys
+screen) runs a single query and reports precisely: API not enabled, invalid key,
+wrong cx, quota exceeded, or all good.
+
+Store the keys once:
 
 ```bash
 ezrecon config set google_api_key  YOUR_KEY
