@@ -23,7 +23,7 @@ the book; EZRecon is the passive workhorse that feeds it.
  |  ___/___  /  __ \   EZRecon
  | |__    / /| /  \/   passive recon for the mainframe hunter
  |  __|  / / | |
- | |___./ /__| \__/\   v2.6.0
+ | |___./ /__| \__/\   v2.7.1
  \____/\_____/\____/
 ```
 
@@ -529,3 +529,22 @@ text.
 
 Built by [Kev Milne](https://offensivesec.org) — OffensiveSec.org — as the
 companion passive-recon tool for *Hacking Mainframes*.
+
+
+### Keyless dork results with SearXNG (recommended)
+
+Google's Custom Search JSON API is now closed to new customers, and DuckDuckGo
+blocks scraping from many networks. The reliable keyless option is your own
+SearXNG metasearch instance — and EZRecon sets it up for you in one command:
+
+```
+ezrecon searx setup      # runs SearXNG (JSON API enabled) and points EZRecon at it
+ezrecon searx status     # check it's up and the JSON API works
+```
+
+If Docker isn't installed, setup offers to install it (Y/N) — Linux/Kali/
+Raspberry Pi via the official script, macOS (Intel & Apple Silicon) via Colima +
+Homebrew. Add `--yes` for unattended setup. After setup, the keyless **Fetch results** button and `ezrecon dork
+<domain> --fetch` use SearXNG automatically. Already have a SearXNG instance?
+Point at it with `ezrecon config set-setting searx_url http://host:8080` (make
+sure `json` is in its `search.formats`).
