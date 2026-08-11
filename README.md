@@ -22,7 +22,7 @@ the book; EZRecon is the passive workhorse that feeds it.
      ____                     eZrecon
  ___|_  /_ _ ___ __ ___ _ _   passive recon for the
 / -_)/ /| '_/ -_) _/ _ \ ' \  mainframe hunter
-\___/___|_| \___\__\___/_||_| v2.19.0
+\___/___|_| \___\__\___/_||_| v2.20.0
 ```
 
 ---
@@ -150,6 +150,9 @@ python3 EZrecon.py
 # one-shot passive sweep with the native banner grab, write a report
 ezrecon auto example.com --ports --report ./out
 
+# same, plus a structured report saved as PDF (or txt / docx / all)
+ezrecon auto example.com --report ./out --report-format pdf
+
 # generate an AI deep-research OSINT prompt for a target
 ezrecon prompt example.com
 ```
@@ -185,13 +188,14 @@ progress and timings.
 |----|--------|
 | `r` | Run the selected module against the target |
 | `a` | Run Auto-Recon |
-| `e` | Export a report (md / html / json / queries.txt) |
+| `e` | Open the report screen — structured preview, save as TXT / DOCX / PDF (and md / html / json) |
 | `k` | Open the API-key vault |
 | `p` | Preview the selected dork result (fetch + analyse) |
 | `g` | Open the entity graph (navigate + pivot) |
-| `o` | Open the Options popup (wordlist, depth, ports, chaining) |
-| `n` | Open MyMap, the nmap script runner |
+| `o` | Open the Options popup (wordlist dir, depth, ports, chaining) |
+| `n` | Open MyMap, the nmap script runner (with a wordlist directory + Files picker) |
 | `s` | Open the CTI RSS reader |
+| `t` | Open the Notepad — create/edit/save text files (users.txt, passwords.txt, …) |
 | `F1` | Contextual help and labs |
 | `c` | Clear the results table |
 | `q` | Quit |
