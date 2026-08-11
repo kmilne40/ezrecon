@@ -22,7 +22,7 @@ the book; EZRecon is the passive workhorse that feeds it.
      ____                     eZrecon
  ___|_  /_ _ ___ __ ___ _ _   passive recon for the
 / -_)/ /| '_/ -_) _/ _ \ ' \  mainframe hunter
-\___/___|_| \___\__\___/_||_| v2.16.0
+\___/___|_| \___\__\___/_||_| v2.17.0
 ```
 
 ---
@@ -190,6 +190,8 @@ progress and timings.
 | `p` | Preview the selected dork result (fetch + analyse) |
 | `g` | Open the entity graph (navigate + pivot) |
 | `o` | Open the Options popup (wordlist, depth, ports, chaining) |
+| `n` | Open MyMap, the nmap script runner |
+| `s` | Open the CTI RSS reader |
 | `c` | Clear the results table |
 | `q` | Quit |
 
@@ -573,14 +575,19 @@ In the TUI use the "Dangling DNS" module, or the "Check takeover" pivot on a
 subdomain node. HTTP confirmation runs only with `--http` (CLI) or active recon
 enabled (TUI).
 
-### nmap / NSE builder
+### MyMap — nmap script runner
 
-Press `n` in the TUI for a builder that reads your installed nmap: tick scripts
-and only that script's `--script-args` appear, with a mainframe filter, book
-presets, search, live command preview, and a Refresh button
-(`--script-updatedb`). It composes and copies the command; run privileged scans
-in your own shell.
+Press `n` in the TUI for MyMap, a menu-driven nmap script runner (a port of Kev's
+standalone MyMap, with Hubert Januszewski and Sophie Hall). Browse the installed
+NSE scripts by category, including mainframe and service sub-menus (MAINFRAME,
+SSL, SMB, SSH, RDP, DATABASE, VULN, BRUTE, FTP, RPC), or search by keyword.
+Selecting a script shows its description and builds the command; a large output
+pane along the bottom highlights the interesting lines, and Report writes a short
+findings paragraph. Speed dials save a command's flags for reuse. Running a scan
+is active recon, so it is gated behind a confirm and built as an argument list,
+not handed to a shell.
 
+The keyless nmap/NSE command builder is still on the CLI:
 ```
 ezrecon nse list --mainframe                 # book scripts present on this box
 ezrecon nse args drda-brute                  # that script's documented args
@@ -624,6 +631,14 @@ keywords are starred. Open items in the browser or email a selection.
 ezrecon rss                         # list latest items per feed
 ezrecon rss --highlight mainframe,RACF
 ezrecon rss --email --to you@example.com   # needs SMTP config
+```
+
+Add your own feeds (saved to `~/.config/ezrecon/rss_feeds.json`, so they survive
+upgrades), or manage them from the Add feed box in the TUI reader:
+```
+ezrecon rss --list-feeds
+ezrecon rss --add-feed "SANS ISC" "https://isc.sans.edu/rssfeed.xml"
+ezrecon rss --remove-feed "SANS ISC"
 ```
 
 SMTP is read from the config vault (no credentials in files):
