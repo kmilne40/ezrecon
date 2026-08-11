@@ -22,7 +22,7 @@ the book; EZRecon is the passive workhorse that feeds it.
      ____                     eZrecon
  ___|_  /_ _ ___ __ ___ _ _   passive recon for the
 / -_)/ /| '_/ -_) _/ _ \ ' \  mainframe hunter
-\___/___|_| \___\__\___/_||_| v2.17.0
+\___/___|_| \___\__\___/_||_| v2.18.0
 ```
 
 ---
@@ -192,6 +192,7 @@ progress and timings.
 | `o` | Open the Options popup (wordlist, depth, ports, chaining) |
 | `n` | Open MyMap, the nmap script runner |
 | `s` | Open the CTI RSS reader |
+| `F1` | Contextual help and labs |
 | `c` | Clear the results table |
 | `q` | Quit |
 
