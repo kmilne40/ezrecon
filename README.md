@@ -22,7 +22,7 @@ the book; EZRecon is the passive workhorse that feeds it.
      ____                     eZrecon
  ___|_  /_ _ ___ __ ___ _ _   passive recon for the
 / -_)/ /| '_/ -_) _/ _ \ ' \  mainframe hunter
-\___/___|_| \___\__\___/_||_| v2.18.0
+\___/___|_| \___\__\___/_||_| v2.19.0
 ```
 
 ---
