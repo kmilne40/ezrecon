@@ -22,7 +22,7 @@ the book; EZRecon is the passive workhorse that feeds it.
      ____                     eZrecon
  ___|_  /_ _ ___ __ ___ _ _   passive recon for the
 / -_)/ /| '_/ -_) _/ _ \ ' \  mainframe hunter
-\___/___|_| \___\__\___/_||_| v2.20.0
+\___/___|_| \___\__\___/_||_| v2.21.0
 ```
 
 ---
@@ -193,7 +193,7 @@ progress and timings.
 | `p` | Preview the selected dork result (fetch + analyse) |
 | `g` | Open the entity graph (navigate + pivot) |
 | `o` | Open the Options popup (wordlist dir, depth, ports, chaining) |
-| `n` | Open MyMap, the nmap script runner (with a wordlist directory + Files picker) |
+| `n` | Open MyMap: universal nmap command builder (line-authoritative), wordlist directory + Files picker, scan-option toggles, and an Output pop-out |
 | `s` | Open the CTI RSS reader |
 | `t` | Open the Notepad — create/edit/save text files (users.txt, passwords.txt, …) |
 | `F1` | Contextual help and labs |
