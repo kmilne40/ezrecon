@@ -2,6 +2,52 @@
 
 All notable changes to EZRecon are recorded here, newest first.
 
+## [2.21.0] — 2026-08-12
+
+Changed
+- MyMap's command builder is now universal and line-authoritative. The editable
+  `$ nmap` line is the single source of truth: picking a category, script,
+  arg, wordlist file, port, target or a scan-option toggle performs a surgical
+  edit that touches only its own token, so anything you've typed that the
+  builder doesn't model — evasion flags, decoys, output options, exotic targets
+  — is preserved. Any valid nmap command runs exactly as written.
+- The builder now forms NSE commands correctly, matching the nmap manual and
+  the book: `--script-args` always follows `--script`, script names are used in
+  their short form, argument values containing spaces or special characters are
+  quoted (e.g. `tso-enum.commands="logon applid(TSO)"`), and empty argument
+  placeholders are stripped before the scan runs.
+
+Added
+- A scan-options row in MyMap with one-tap toggles for `-sV`, `-Pn`, `-n`,
+  `--open` and `+force` (force a script to run even when the service isn't
+  detected) — the extras a scan, especially a mainframe scan, often needs.
+- An Output pop-out (the "Output ⤢" button): a large, scrollable window showing
+  the full scan output, with select-and-copy, a Copy all button, and Save to
+  file. The inline output pane stays in place; the pop-out gives the big,
+  copyable view on demand.
+
+## [2.20.0] — 2026-08-11
+
+Added
+- A wordlist directory for MyMap. Under the command line there's now a
+  "wordlists:" bar and a Files button that browses a directory of your lists
+  (users.txt, passwords.txt, subdomains.txt and the rest) and drops a chosen
+  file's full path onto the command. If you've picked a file-type arg such as
+  `userdb`, selecting a file completes it to `userdb=/…/users.txt`, and the
+  value survives later target and port edits. The directory is configurable in
+  Options and remembered.
+- A Notepad (key `t`, or the sidebar). A pop-up text editor with a directory
+  bar, a file list, New / Open / Save / Copy all, and a filename box. It
+  defaults to the same wordlist directory, so a list you create here is exactly
+  what MyMap's Files button then offers.
+- A structured report you can save as TXT, DOCX or PDF. The `e` export now
+  opens a report screen with a live preview — target, a severity summary, key
+  findings, findings by category, and the queries used — and buttons to save
+  each format, plus the previous md/html/json export. The DOCX and PDF writers
+  are pure Python, so no new dependencies were added.
+- `--report-format {txt,docx,pdf,all}` on the CLI, to write the same structured
+  report from the shell alongside `--report`.
+
 ## [2.19.0] — 2026-08-11
 
 Changed
