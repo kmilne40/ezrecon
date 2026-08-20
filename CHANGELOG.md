@@ -2,6 +2,47 @@
 
 All notable changes to EZRecon are recorded here, newest first.
 
+## [2.23.4] — 2026-08-20
+
+Changed
+- Terminal output (every `ezrecon` command outside the TUI) is now three columns
+  — Category, Key, Value. The right-hand "Why" column is gone; for medium and
+  high findings the rating and a short reason now sit on an indented line
+  directly underneath the row (e.g. `↳ MEDIUM — DMARC monitor-only — forgeries
+  still delivered`). The line under the header row has been removed too, leaving
+  a rule only at the very top and bottom — still no side borders, so output
+  pastes straight into a document.
+
+## [2.23.3] — 2026-08-20
+
+Fixed
+- SearXNG setup now installs Docker when only the `docker` client is present but
+  the daemon (`dockerd`) is not. The install check keyed off the docker CLI
+  alone, so a machine with the client but no engine — e.g. a partial
+  docker-ce-cli install left by an earlier failed run — was treated as "Docker
+  installed", the install step was skipped, and startup failed with
+  `nohup: failed to run command 'dockerd': No such file or directory`. eZrecon
+  now treats Docker as installed only when the daemon binary is actually present,
+  completes the engine install (docker-ce, then docker.io) when just the client
+  is found, verifies the install put a working `dockerd` in place, and locates
+  `dockerd` in /usr/sbin and friends (not only on PATH) when starting it.
+
+## [2.23.2] — 2026-08-20
+
+Fixed
+- SearXNG setup: fixed a regression that stopped Docker starting on WSL (and
+  other non-systemd hosts). The start path had grown two competing mechanisms —
+  an initial `service docker start`, then a second start plus a direct `nohup
+  dockerd` — and it checked `docker ps` immediately, before dockerd had finished
+  coming up. On WSL that raced: the direct daemon collided with the
+  service-launched one over the pidfile/socket and left Docker down. There is now
+  one patient start path that starts the daemon once, waits for it to become
+  reachable before escalating, never launches a second dockerd on top of a
+  running one, clears a stale pidfile before a genuine last-resort direct start,
+  and prints the dockerd log on real failure so you can see the cause (e.g. WSL
+  iptables). Boot-persistence (`systemctl enable`) is now separate from starting,
+  so the two can't race. The systemd path is unchanged.
+
 ## [2.23.1] — 2026-08-20
 
 Changed
