@@ -2,6 +2,48 @@
 
 All notable changes to EZRecon are recorded here, newest first.
 
+## [2.23.1] — 2026-08-20
+
+Changed
+- The plain-terminal output (every `ezrecon` command, outside the TUI) is now a
+  four-column table — Sev, Category, Key, Value, and a new "Why (medium+)"
+  column giving a ≤10-word reason for any medium or high rating (info and low
+  are left blank). The reason comes from the same rationale engine as the detail
+  panel and the reports, condensed.
+- That output now draws a rule only at the very top and bottom (no inner row
+  lines, no side borders), so a block of results pastes straight into a document
+  with no ASCII box characters to clean up. The TUI is unchanged.
+
+## [2.23.0] — 2026-08-20
+
+Added
+- Every finding now carries a contextual explanation of WHY it is rated the
+  way it is — specific to the check that produced it, not a generic line — plus
+  its impact, the fix, and a confidence note (verified vs inferred). One engine
+  (`rationale`) feeds both the reports and the interface so they never disagree.
+- The findings table in the TUI is clickable: select any row (Enter or click)
+  to open a detail panel with the value, the why/impact/fix/confidence, the raw
+  details, and context actions (Copy, Open URL, Map this IP).
+- Reports gained an executive summary with a 0–100 exposure score and band, the
+  why/impact/fix under every non-info finding, an attack-surface-by-host view,
+  and confidence. A new self-contained HTML report mirrors the interface
+  (severity-tagged, collapsible host view, embedded rationale); add it with
+  `--report-format html` or the Save HTML button.
+- IP geolocation (keyless) and an OpenStreetMap map. `ezrecon map <ip>` writes a
+  standalone Leaflet/OSM page and opens it; the finding detail panel has a
+  "Map this IP" action; and an Estate Map module plots every located host.
+  Auto-recon geolocates discovered IPs so the estate map is ready.
+- OSINT profile (`ezrecon profile`, an OSINT Profile module, and part of
+  auto-recon): key people (from document authors, the email pattern, and forum
+  posters using an @domain address) and the technology in use (site-header
+  fingerprint plus a technology-keyword pass over forum and search results),
+  each with the evidence behind it.
+- Keyless passive subdomains now also run inside auto-recon.
+- Reverse image provenance (`ezrecon image`, an Image Provenance module): a
+  perceptual hash plus the reverse-image-search links (Google Lens, Bing,
+  Yandex, TinEye) to find where an image already appears online. It is about the
+  image, not the person — eZrecon does not perform facial recognition.
+
 ## [2.22.0] — 2026-08-20
 
 More detail, fewer false positives — a deeper information-gathering pass across
