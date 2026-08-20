@@ -2,6 +2,79 @@
 
 All notable changes to EZRecon are recorded here, newest first.
 
+## [2.22.0] — 2026-08-20
+
+More detail, fewer false positives — a deeper information-gathering pass across
+the recon modules rather than more sub-tools.
+
+Added
+- WHOIS now interprets the EPP domain-status codes with a pen-tester lens. It
+  calls out whether the domain is locked against transfer (a missing
+  clientTransferProhibited is flagged as registrar-hijack exposure), extracts
+  the registrar abuse contact, computes domain age and days-to-expiry (flagging
+  domains expiring soon), reports DNSSEC state, and notes privacy-redacted
+  registrant data.
+- DNS gathers far more: CAA records (and flags their absence), common SRV
+  service records, DKIM selector discovery, the include: senders and policy
+  pulled out of SPF, DMARC policy plus its report addresses, SaaS
+  verification tokens hiding in TXT, and email-auth gap findings (missing
+  SPF/DMARC on a mail domain). Absence is only inferred from a definitive DNS
+  answer, never a timeout, to avoid false positives.
+- Subdomains now adds keyless passive sources — HackerTarget, AlienVault OTX,
+  CertSpotter and JLDC/Anubis — alongside the brute force, unioned and
+  DNS-verified so only names that resolve are reported. CLI: `--no-brute` /
+  `--no-passive`.
+- FOFA infrastructure search (`ezrecon fofa`, and a FOFA module in the TUI),
+  with a mainframe query set. Needs `fofa_email` + `fofa_key`.
+- The AI prompt can be focused: it asks for up to five keywords/interests (a
+  prompt in the TUI, `--focus` on the CLI) and weights the generated report
+  towards them.
+- People/email harvesting can now search engines and technical forums
+  (Stack Overflow, Server Fault, Reddit, GitHub, GitLab, Pastebin, HN) for
+  domain emails and mentions, keyword-aware and de-duplicated into the existing
+  dossier. CLI: `ezrecon harvest --web --keywords "…"`.
+
+## [2.21.3] — 2026-08-20
+
+Changed
+- `ezrecon searx setup` now provisions Docker end to end itself. On Linux it
+  attempts docker-ce via get.docker.com and, if that doesn't leave a working
+  docker (the usual Kali outcome), installs the native docker.io package —
+  then runs an explicit `sudo systemctl start docker` and `sudo systemctl
+  enable docker` for whichever flavour landed (so the daemon is up now and
+  comes back on boot), before pulling the image and running SearXNG on host
+  port 10080 with EZRecon pointed at it. The start + enable also runs when
+  Docker was already installed but stopped or not enabled.
+
+## [2.21.2] — 2026-08-20
+
+Changed
+- SearXNG now runs on host port 10080 by default instead of 8080, which is
+  frequently already in use on a lab host. The container still listens on its
+  own default port internally; only the host mapping changed, and EZRecon is
+  pointed at 10080. Override with `ezrecon searx setup --port <n>`.
+- Docker installation on Linux is now belt-and-braces. It still tries Docker's
+  official get.docker.com script first, but if that fails or leaves no working
+  docker (as on Kali, which the script doesn't officially support) it falls
+  back to the native `docker.io` package via apt, then enables and starts the
+  service with `systemctl enable --now docker` so it survives reboots.
+
+Added
+- `phosphor_install.sh`, a one-shot installer. It installs the `ezrecon`
+  command (handling Kali/Debian's externally-managed Python) and then explains
+  what SearXNG is and what it's used for before asking whether to set it up —
+  running the full keyless SearXNG bootstrap on port 10080 if you agree.
+
+## [2.21.1] — 2026-08-12
+
+Changed
+- Simplified MyMap's layout. The wordlist directory bar has been removed from
+  the screen — it was more confusing than useful there. The wordlist directory
+  now lives solely in Options, and the Files picker moved to a compact button on
+  the command row (where it belongs, since it inserts a path into the command).
+  The freed space goes to the output pane, which is now taller, with the action
+  buttons moved up beneath the command line.
+
 ## [2.21.0] — 2026-08-12
 
 Changed
